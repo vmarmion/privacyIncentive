@@ -5,7 +5,7 @@ import sys
 import scipy
 import matplotlib.pyplot as plt
 
-N = 1000
+N = 100
 
 
 REVENUE_PP = 10.0
