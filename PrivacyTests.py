@@ -3,7 +3,7 @@ from decimal import *
 import math
 import sys
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 CUST_BENEFIT = 0
 CUST_TEST_COST = 1
@@ -59,13 +59,26 @@ def utilityComp(pars):
 
 def play():
 	custU = []
+	compU = []
 	for n in xrange(RUNS+1):
 		m = n/RUNS
 		#print m
 		pars = GameParameters(m,m)
 
 		custU.append(utilityCust(pars))
-		#print utilityComp(pars), "U_COMP"
+		compU.append(utilityComp(pars))
 		#print pars, m
-		print custU
+	#print custU
+
+	fig = plt.figure(num=None, figsize=(8, 8), dpi=80, facecolor='w', edgecolor='k')
+	fig.suptitle("Lemons ")
+	
+	plt.subplot(211)
+	plt.plot(custU,"g", label="Customer Utility to  Test")
+	plt.plot(compU,"r", label="Company Utility to Respect")
+	plt.ylabel("Utility")
+	#plt.axis([0,100,0,6000])
+	plt.legend(bbox_to_anchor=(0.5, 1), loc=2, borderaxespad=0.)
+
+	plt.show()
 play()
