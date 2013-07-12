@@ -42,9 +42,8 @@ def GameParameters(ntc, nro):
 
 	# - (B-V) - T to be positive
 	custBenefit = 10
-	custTestCost = 5
 	custViolationCost = 20
-	
+	custTestCost = 5
 
 	orgProfit = 10 # P
 	orgPrivacyCost = 5 # S

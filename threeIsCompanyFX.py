@@ -5,7 +5,7 @@ import sys
 import scipy
 import matplotlib.pyplot as plt
 
-N = 10000
+N = 1000000
 
 
 REVENUE_PP = 10.0
@@ -16,7 +16,7 @@ REDUCED_REV = 2.0
 BASE_PROFIT_PP = REVENUE_PP - COST_PP
 PRIVACY_PROFIT_PP = BASE_PROFIT_PP - COST_PRIVACY - REDUCED_REV
 
-POPULARITY_CVAST = 0.7
+POPULARITY_CVAST = 0.8
 POPULARITY_CLIGHT = 1.0 - POPULARITY_CVAST
 
 
@@ -70,17 +70,17 @@ def calcResults(parameters):
 	MINDFULNESS = parameters[0]
 	NAIVENESS = parameters[1]
 
-	Clight_HH_rev = POPULARITY_CLIGHT * N * PRIVACY_PROFIT_PP
-	Cvast_HH_rev = POPULARITY_CVAST * N * PRIVACY_PROFIT_PP
+	Clight_HH_rev = math.pow((POPULARITY_CLIGHT * N), (0.2 * math.e))
+	Cvast_HH_rev = math.pow((POPULARITY_CVAST * N), (0.2 * math.e)) 
 	
-	Clight_HL_rev = (POPULARITY_CLIGHT * NAIVENESS * PRIVACY_PROFIT_PP) + (MINDFULNESS * PRIVACY_PROFIT_PP)
-	Cvast_HL_rev = POPULARITY_CVAST * NAIVENESS * BASE_PROFIT_PP
+	Clight_HL_rev = math.pow((POPULARITY_CLIGHT * NAIVENESS), (0.2 * math.e)) + math.pow(MINDFULNESS, (0.2 * math.e))
+	Cvast_HL_rev = math.pow((POPULARITY_CVAST * NAIVENESS), (0.22 * math.e))
 	
-	Clight_LH_rev = POPULARITY_CLIGHT * NAIVENESS * BASE_PROFIT_PP
-	Cvast_LH_rev = (POPULARITY_CVAST * NAIVENESS * PRIVACY_PROFIT_PP) + (MINDFULNESS * PRIVACY_PROFIT_PP)
+	Clight_LH_rev = math.pow((POPULARITY_CLIGHT * NAIVENESS), (0.22 * math.e))
+	Cvast_LH_rev = math.pow((POPULARITY_CVAST * NAIVENESS), (0.2 * math.e)) + math.pow(MINDFULNESS, (0.2 * math.e))
 	
-	Clight_LL_rev = POPULARITY_CLIGHT * N * BASE_PROFIT_PP
-	Cvast_LL_rev = POPULARITY_CVAST * N * BASE_PROFIT_PP
+	Clight_LL_rev = math.pow((POPULARITY_CLIGHT * N), (0.22 * math.e))
+	Cvast_LL_rev = math.pow((POPULARITY_CVAST * N), (0.22 * math.e))
 
 	results = [Clight_HH_rev, Cvast_HH_rev, Clight_HL_rev, Cvast_HL_rev, Clight_LH_rev, Cvast_LH_rev,  Clight_LL_rev, Cvast_LL_rev]
 	
@@ -163,23 +163,24 @@ def undefined_Strategies(result, player):
 		d = result[Clight_LL]
 
 		low = min(a,b,c,d)
-		if a or b == low: 
+		if (a == low) or (b == low): 
 			return NON_PRIVATE
-		if c or d == low: 
+		if (c == low) or (d == low): 
 			return PRIVATE
 
 	elif player == Cvast:
 	
 		#eliminate lowest possible return
 		a = result[Cvast_HH]
-		b = result[Cvast_LH]
-		c = result[Clight_HL]
-		d = result[Clight_LL]
-
+		b = result[Cvast_HL]
+		c = result[Cvast_LH]
+		d = result[Cvast_LL]
+		print a,b,c,d
 		low = min(a,b,c,d)
-		if a or c == low: 
+		if (a == low) or (c == low):  
+			
 			return NON_PRIVATE
-		if b or d == low: 
+		if (b == low) or (d == low): 
 			return PRIVATE
 
 
@@ -189,28 +190,29 @@ def calc_revenue(result, strategies, parameters):
 	Clight_revenue = Cvast_revenue = 0
 	PC_revenue = 0
 	if strategies[Clight] and strategies[Cvast] == PRIVATE:
-		print "1"
+	
 		Clight_revenue = result[Clight_HH]
 		Cvast_revenue = result[Cvast_HH]
-		PC_revenue = N * COST_PP
+		PC_revenue = math.pow(N, (0.2 * math.e))
 	
 	elif ((strategies[Clight] == NON_PRIVATE) and (strategies[Cvast] == NON_PRIVATE)):
-		print "2"
+	
 		Clight_revenue = result[Clight_LL]
 		Cvast_revenue = result[Cvast_LL]
 		PC_revenue = 0
 
 	elif ((strategies[Clight] == PRIVATE) and (strategies[Cvast] == NON_PRIVATE)):
-		print "------------------------HELLO"
+		
 		Clight_revenue = result[Clight_HL]
 		Cvast_revenue = result[Cvast_HL]
-		PC_revenue = (POPULARITY_CLIGHT * NAIVENESS * COST_PP) + (MINDFULNESS * COST_PP)
+		PC_revenue = math.pow( ( (POPULARITY_CLIGHT * NAIVENESS) + MINDFULNESS), (0.2 * math.e))
 
 	elif ((strategies[Clight] == NON_PRIVATE) and (strategies[Cvast] == PRIVATE)):
 		Clight_revenue = result[Clight_LH]
 		Cvast_revenue = result[Cvast_LH]
-		PC_revenue = (POPULARITY_CVAST * NAIVENESS * COST_PP) + (MINDFULNESS * COST_PP)
-		
+		PC_revenue = math.pow( ( (POPULARITY_CVAST * NAIVENESS) + MINDFULNESS), (0.2 * math.e))
+
+	
 	print "Revenues:\t\t\t", Clight_revenue, "\t|",Cvast_revenue 
 	
 	return Clight_revenue, Cvast_revenue, PC_revenue
@@ -260,7 +262,7 @@ def play(outfile, parameters):
 		print "Avoiding Low:\t\t\t",Strategy_Options[Cvast_strategy]
 
 	strategies = Clight_strategy, Cvast_strategy 
-	print strategies, "what t f"	
+		
 	#Rev
 	revenues = calc_revenue(gameResults, strategies, parameters)
 	
@@ -349,7 +351,7 @@ def analysis():
 	plt.plot(ClightREV_LH,"r--",label="CL_LH")
 	plt.plot(ClightREV_LL,"r", label="CL_LL")
 	plt.ylabel("Potential Revenues ")
-	plt.axis([0,100,0,6000])
+	#plt.axis([0,100,0,6000])
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
 	plt.subplot(512)
@@ -365,7 +367,7 @@ def analysis():
 	plt.plot(CV_DS,"b--", label="CVast DS")
 	plt.ylabel("Dominant Strategies")
 	plt.yticks([0,1,2,3], Strategy_Options)
-	plt.axis([0,100,-1,4])
+	#plt.axis([0,100,-1,4])
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
 	plt.subplot(514)
@@ -374,7 +376,7 @@ def analysis():
 	plt.xlabel("Mindfulness Population %")
 	plt.ylabel("Chosen Strategies")
 	plt.yticks([0,1,2,3], Strategy_Options)
-	plt.axis([0,100,-1,4])
+	#plt.axis([0,100,-1,4])
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
 	plt.subplot(515)
@@ -386,18 +388,31 @@ def analysis():
 	plt.xlabel("Mindfulness Population %")
 	plt.ylabel("Pridicted Revenues")
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-	plt.axis([0,100,0,6000])
+	#plt.axis([0,100,0,6000])
 	plt.show()
 
+	fig2 = plt.figure(num=None, figsize=(12, 8), dpi=80, facecolor='w', edgecolor='k')
+	fig2.suptitle("Player Strategies and Revenue per Mindfulness Population \n(CVAST POP = %s, CLIGHT POP = %s )" %(POPULARITY_CVAST, POPULARITY_CLIGHT))
+	
+	plt.subplot(211)
 	plt.plot(CL_rev, "r.", label="CLight Revenue")
 	plt.plot(CV_rev, "b.", label="CVast Revenue")
-	plt.plot(PC_rev, "g.", label = "Prviacy Comp Revenue")
-	plt.plot(ClightREV_LH,"r--",label="CL_LH")
-	plt.plot(CvastREV_HL,"b--",label="CV_HL")
+	plt.plot(PC_rev, "g--", label = "Prviacy Comp Revenue")
+	#plt.plot(ClightREV_LH,"r--",label="CL_LH")
+	#plt.plot(CvastREV_HL,"c--",label="CV_HL")
 	plt.xlabel("Mindfulness Population %")
 	plt.ylabel("Pridicted Revenues")
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 	#plt.axis([0,100,0,6000])
+
+	plt.subplot(212)
+	plt.plot(CL_str, "r.", label="CLight Strategy")
+	plt.plot(CV_str, "b-", label="CVast Strategy")
+	plt.xlabel("Mindfulness Population %")
+	plt.ylabel("Chosen Strategies")
+	plt.yticks([0,1,2,3], Strategy_Options)
+	#plt.axis([0,100,-1,4])
+	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 	plt.show()
 
 def runs():
