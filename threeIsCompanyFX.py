@@ -74,13 +74,13 @@ def calcResults(parameters):
 	Cvast_HH_rev = math.pow((POPULARITY_CVAST * N), (0.2 * math.e)) 
 	
 	Clight_HL_rev = math.pow((POPULARITY_CLIGHT * NAIVENESS), (0.2 * math.e)) + math.pow(MINDFULNESS, (0.2 * math.e))
-	Cvast_HL_rev = math.pow((POPULARITY_CVAST * NAIVENESS), (0.22 * math.e))
+	Cvast_HL_rev = math.pow((POPULARITY_CVAST * NAIVENESS), (0.21 * math.e))
 	
-	Clight_LH_rev = math.pow((POPULARITY_CLIGHT * NAIVENESS), (0.22 * math.e))
+	Clight_LH_rev = math.pow((POPULARITY_CLIGHT * NAIVENESS), (0.21 * math.e))
 	Cvast_LH_rev = math.pow((POPULARITY_CVAST * NAIVENESS), (0.2 * math.e)) + math.pow(MINDFULNESS, (0.2 * math.e))
 	
-	Clight_LL_rev = math.pow((POPULARITY_CLIGHT * N), (0.22 * math.e))
-	Cvast_LL_rev = math.pow((POPULARITY_CVAST * N), (0.22 * math.e))
+	Clight_LL_rev = math.pow((POPULARITY_CLIGHT * N), (0.21 * math.e))
+	Cvast_LL_rev = math.pow((POPULARITY_CVAST * N), (0.21 * math.e))
 
 	results = [Clight_HH_rev, Cvast_HH_rev, Clight_HL_rev, Cvast_HL_rev, Clight_LH_rev, Cvast_LH_rev,  Clight_LL_rev, Cvast_LL_rev]
 	
@@ -162,11 +162,18 @@ def undefined_Strategies(result, player):
 		c = result[Clight_LH]
 		d = result[Clight_LL]
 
+		P = (a+b)/2.0
+		NP = (c+d)/2.0
+		if P > NP:
+			return PRIVATE
+		else:
+			return NON_PRIVATE
+		"""	
 		low = min(a,b,c,d)
 		if (a == low) or (b == low): 
 			return NON_PRIVATE
 		if (c == low) or (d == low): 
-			return PRIVATE
+			return PRIVATE"""
 
 	elif player == Cvast:
 	
@@ -175,14 +182,23 @@ def undefined_Strategies(result, player):
 		b = result[Cvast_HL]
 		c = result[Cvast_LH]
 		d = result[Cvast_LL]
-		print a,b,c,d
+		
+		P = (a+c)/2.0
+		NP = (b+d)/2.0
+		if P > NP:
+			return PRIVATE
+		else:
+			return NON_PRIVATE
+		"""
 		low = min(a,b,c,d)
 		if (a == low) or (c == low):  
 			
 			return NON_PRIVATE
 		if (b == low) or (d == low): 
 			return PRIVATE
-
+		"""
+	print "ERROR!!!!!!!!"
+	return 0
 
 def calc_revenue(result, strategies, parameters):
 	MINDFULNESS = parameters[0]
