@@ -16,7 +16,7 @@ REDUCED_REV = 2.0
 BASE_PROFIT_PP = REVENUE_PP - COST_PP
 PRIVACY_PROFIT_PP = BASE_PROFIT_PP - COST_PRIVACY - REDUCED_REV
 
-POPULARITY_CVAST = 0.8
+POPULARITY_CVAST = 0.7
 POPULARITY_CLIGHT = 1.0 - POPULARITY_CVAST
 
 
@@ -24,7 +24,7 @@ NONE = 0
 NON_PRIVATE = 1
 PRIVATE = 2
 UNDEFINED = 3
-Strategy_Options = ["None", "No Privacy", "Privacy", "Undefined"]
+Strategy_Options = ["None", "Defect", "Respect", "Undefined"]
 
 Clight = 0
 Cvast = 1
@@ -408,27 +408,33 @@ def analysis():
 	plt.show()
 
 	fig2 = plt.figure(num=None, figsize=(12, 8), dpi=80, facecolor='w', edgecolor='k')
-	fig2.suptitle("Player Strategies and Revenue per Mindfulness Population \n(CVAST POP = %s, CLIGHT POP = %s )" %(POPULARITY_CVAST, POPULARITY_CLIGHT))
+	fig2.suptitle("Player Strategies and Revenue per Mindfulness Population \n(Cvast Popularity = %s, CLight Popularity = %s )" %(POPULARITY_CVAST, POPULARITY_CLIGHT))
 	
-	plt.subplot(211)
-	plt.plot(CL_rev, "r.", label="CLight Revenue")
-	plt.plot(CV_rev, "b.", label="CVast Revenue")
-	plt.plot(PC_rev, "g--", label = "Prviacy Comp Revenue")
-	#plt.plot(ClightREV_LH,"r--",label="CL_LH")
-	#plt.plot(CvastREV_HL,"c--",label="CV_HL")
-	plt.xlabel("Mindfulness Population %")
-	plt.ylabel("Pridicted Revenues")
+	plt.subplot(311)
+	plt.plot(CL_rev, "r.", label="CLight")
+	plt.plot(CV_rev, "b.", label="CVast ")
+	#plt.plot(PC_rev, "g--", label = "Prviacy Comp Revenue")
+	plt.ylabel("Potential Revenues\n\n")
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-	#plt.axis([0,100,0,6000])
 
-	plt.subplot(212)
-	plt.plot(CL_str, "r.", label="CLight Strategy")
-	plt.plot(CV_str, "b-", label="CVast Strategy")
-	plt.xlabel("Mindfulness Population %")
-	plt.ylabel("Chosen Strategies")
-	plt.yticks([0,1,2,3], Strategy_Options)
-	#plt.axis([0,100,-1,4])
+	plt.subplot(312)
+	plt.plot(CL_str, "r.", label="CLight")
+	plt.plot(CV_str, "b-", label="CVast")
+	plt.ylabel("Chosen Strategies\n")
+	plt.yticks([0,1,2], Strategy_Options)
+	plt.axis([0,100,-1,3])
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+	plt.subplot(313)
+	plt.plot(CL_DS, "r.", label="CLight")
+	plt.plot(CV_DS,"b--", label="CVast")
+	plt.ylabel("Dominant Strategies\n")
+	plt.xlabel("Mindful Population %")
+	plt.yticks([0,1,2], Strategy_Options)
+	plt.axis([0,100,-1,3])
+
+	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+	plt.savefig("gameOneResults3.pdf")
 	plt.show()
 
 def runs():

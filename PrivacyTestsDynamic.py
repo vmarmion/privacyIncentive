@@ -2,6 +2,7 @@ from __future__ import division
 from decimal import *
 import math
 import sys
+import scipy
 
 import matplotlib.pyplot as plt
 from random import randrange
@@ -13,30 +14,99 @@ ORG_PROFIT = 3
 ORG_PRIVACY_COST = 4
 ORG_DATA_PROFIT = 5
 
-NUM_RESPECT_ORG = 6
-NUM_DEFEAT_ORG = 7
-NUM_TEST_CUST = 8
-NUM_DONT_CUST = 9
+NUM_ORGS = 3
+NUM_CUSTOMERS = 5
 
-RUNS = 10000
-NUM_CUSTOMERS = 100
-NUM_ORGS = 100
+RUNS = 100
+
+
+def AssignRandomInter():
+	interactionArray = []
+	total = 0
+	for o in range(NUM_ORGS):
+		num = randrange(2)
+		interactionArray.append(num)
+	return interactionArray
 
 def setCustomers():
-	CustArray = []
-	for x in range(NUM_CUSTOMERS):
-		cust = 0
-		CustArray.append(cust)
-	return CustArray
+	CustInteractionArray = []
+	for c in range(NUM_CUSTOMERS):
+		IR = AssignRandomInter()
+		CustInteractionArray.append(IR)
+		temp = [0,0]
+		CustStrategyArray.append(temp)
+	return CustInteractionArray, CustStrategyArray
 
 def setOrgs():
-	orgArray = []
+	orgStrategy = []
 	for x in range(NUM_ORGS):
-		org = 0
-		orgArray.append(org)
-	return orgArray
+		orgStrategy.append(randrange(2))
+	return  orgStrategy
+
+def calcEngagement(CA, CS):
+	res = CS
+	for c in CA:
+		CI = 0
+
+		for o in range(NUM_ORGS):
+			CI += c[o]
+			res[0] = CI
+	return res
+
+def calcUtility(CA, OS):
+	U = 0
+	res = []
+	for c in CA:
+		U = 0
+		print "customer", c
+		for o in range(NUM_ORGS):
+			if c[o] == 1: 
+				#print "interacting"
+				if OS[o] == 1:
+					print "Defecting"
+					U +=1
+		print U
+		c[NUM_ORGS+1] = U
+		print c
+		res.append(c)
+	return res
+
+def calcOrgHealth(CA):
+	OH = []
+	for o in range(NUM_ORGS):
+		total = 0
+		for c in CA:
+			total += c[o]
+		OH.append(total)
+	return OH
 
 
+
+def display(CA, OH, OS, CI):
+
+	print "Orgs --> \t\t| total"
+	for c in range(NUM_CUSTOMERS):
+		print CA[c], "Customer: ",c+1
+
+	print "Engagement:\t", CI
+	print "Org Health:\t", OH
+	print "Org Strategy:\t", OS
+
+def run():
+	print "\n///////////////START/////////////////\n"
+	OS = setOrgs()
+
+	CA, CS = setCustomers()
+	
+	CI = calcEngagement(CA, CS)
+	OH = calcOrgHealth(CA)
+
+	calcUtility(CA, OS)
+
+	display(CA, OH, OS, CI)
+
+
+run()
 
 def GameParameters(ntc, nro):
 
@@ -94,8 +164,6 @@ def perOA(OA):
 	return per
 
 def begin():
-	custT = []
-	orgR = []
 	CA = setCustomers()
 	OA = setOrgs()
 	Cdecision = 0
@@ -135,4 +203,3 @@ def begin():
 
 
 
-begin()
