@@ -5,7 +5,14 @@ import sys
 import scipy
 import matplotlib.pyplot as plt
 
-N = 1000000
+"""
+Simulations with a strategy game.
+
+popularity commences with dominant market share of Cvast
+
+"""
+N = 10000
+NUMRUNS = 3000
 
 NONE = 0
 EXPLOIT = 1
@@ -40,6 +47,7 @@ def print_parameters(parameters):
 	print "NAIVENESS\t\t" , parameters[1]
 	print "POPULARITY_CVAST\t", parameters[2]
 	print "POPULARITY_CLIGHT\t", parameters[3]
+	print "OPT_OUT\t\t\t", parameters[4]
 	print "-------------------------------------------"
 	
 def calcResults(parameters):
@@ -48,19 +56,22 @@ def calcResults(parameters):
 	NAIVENESS = parameters[1]
 	POPULARITY_CVAST = parameters[2]
 	POPULARITY_CLIGHT = parameters[3]
-	Clight_HH_rev = math.pow((POPULARITY_CLIGHT * N), (0.2 * math.e))
-	Cvast_HH_rev = math.pow((POPULARITY_CVAST * N), (0.2 * math.e)) 
+	OPT_OUT = parameters[4]
+	POP = N - (OPT_OUT * N)
+	Aware_pop = int(AWARENESS* N)
+	Naive_pop = N - Aware_pop
+	print Aware_pop, Naive_pop, "-----"
+	Clight_HH_rev = math.pow((POPULARITY_CLIGHT * POP), (0.1 * math.e))
+	Cvast_HH_rev = math.pow((POPULARITY_CVAST * POP), (0.1 * math.e)) 
 	
-	Clight_HL_rev = math.pow(((POPULARITY_CLIGHT * NAIVENESS) + AWARENESS), (0.2 * math.e))
-	Cvast_HL_rev = math.pow((POPULARITY_CVAST * NAIVENESS), (0.22 * math.e))
-
-
+	Clight_HL_rev = math.pow(((POPULARITY_CLIGHT * Naive_pop) + Aware_pop), (0.1 * math.e))
+	Cvast_HL_rev = math.pow((POPULARITY_CVAST * Naive_pop), (0.13 * math.e))
 	
-	Clight_LH_rev = math.pow((POPULARITY_CLIGHT * NAIVENESS), (0.22 * math.e))
-	Cvast_LH_rev = math.pow(((POPULARITY_CVAST * NAIVENESS)+ AWARENESS), (0.2 * math.e)) 
+	Clight_LH_rev = math.pow((POPULARITY_CLIGHT * Naive_pop), (0.13 * math.e))
+	Cvast_LH_rev = math.pow(((POPULARITY_CVAST * Naive_pop)+ Aware_pop), (0.1 * math.e)) 
 	
-	Clight_LL_rev = math.pow((POPULARITY_CLIGHT * N), (0.22 * math.e))
-	Cvast_LL_rev = math.pow((POPULARITY_CVAST * N), (0.22 * math.e))
+	Clight_LL_rev = math.pow((POPULARITY_CLIGHT * POP), (0.13 * math.e))
+	Cvast_LL_rev = math.pow((POPULARITY_CVAST * POP), (0.13 * math.e))
 
 	results = [Clight_HH_rev, Cvast_HH_rev, Clight_HL_rev, Cvast_HL_rev, Clight_LH_rev, Cvast_LH_rev,  Clight_LL_rev, Cvast_LL_rev]
 	
@@ -133,9 +144,45 @@ def calc_strategies(result, DS):
 
 	return Clight_strategy, Cvast_strategy
 
-def undefined_Strategies(result, player):
-	if player == Clight:
+def undefined_Strategies(result, player, lastOpponentStrategy):
 	
+	if player == Clight:
+		if lastOpponentStrategy == RESPECT:
+			a = result[Clight_HH]
+			b = result[Clight_LH]
+			if a > b:
+				return RESPECT
+			else:
+				return EXPLOIT
+
+		elif lastOpponentStrategy == EXPLOIT:
+			a = result[Clight_HL]
+			b = result[Clight_LL]
+			if a > b:
+				return RESPECT
+			else:
+				return EXPLOIT
+
+	if player == Cvast:
+		if lastOpponentStrategy == RESPECT:
+			a = result[Cvast_HH]
+			b = result[Cvast_HL]
+			if a > b:
+				return RESPECT
+			else:
+				return EXPLOIT
+
+		elif lastOpponentStrategy == EXPLOIT:
+			a = result[Cvast_LH]
+			b = result[Cvast_LL]
+			if a > b:
+				return RESPECT
+			else:
+				return EXPLOIT
+	return 0
+"""
+	if player == Clight:
+		#if could have made more mney last time do that instead
 		#eliminate lowest possible return
 		a = result[Clight_HH]
 		b = result[Clight_HL]
@@ -144,7 +191,7 @@ def undefined_Strategies(result, player):
 
 		P = (a+b)/2.0
 		NP = (c+d)/2.0
-		if P > NP:
+		if P >= NP:
 			return RESPECT
 		else:
 			return EXPLOIT
@@ -160,12 +207,12 @@ def undefined_Strategies(result, player):
 		
 		P = (a+c)/2.0
 		NP = (b+d)/2.0
-		if P > NP:
+		if P >= NP:
 			return RESPECT
 		else:
 			return EXPLOIT
-		
-	return 0
+		"""
+	
 
 def calc_revenue(result, strategies, parameters):
 	AWARENESS = parameters[0]
@@ -205,20 +252,81 @@ def calc_popularity(strategies, parameters):
 	POPULARITY_CVAST = parameters[2]
 	POPULARITY_CLIGHT = parameters[3]
 	
-	if strategies[Clight] and strategies[Cvast] == RESPECT:
-		print "one"
+	if ((strategies[Clight] == RESPECT) and (strategies[Cvast] == RESPECT)):
+		if POPULARITY_CVAST > POPULARITY_CLIGHT:
+			POPULARITY_CVAST  += (POPULARITY_CVAST * 0.01)
+		else:
+			POPULARITY_CVAST  -= (POPULARITY_CVAST * 0.01)
+		return POPULARITY_CVAST
+	elif ((strategies[Clight] == EXPLOIT) and (strategies[Cvast] == EXPLOIT)):
+		return POPULARITY_CVAST
+	elif ((strategies[Clight] == RESPECT) and (strategies[Cvast] == EXPLOIT)):
+		POPULARITY_CVAST  -= (POPULARITY_CVAST * 0.01)
+	elif ((strategies[Clight] == EXPLOIT) and (strategies[Cvast] == RESPECT)):
+		POPULARITY_CVAST  += (POPULARITY_CVAST * 0.01)
+	return POPULARITY_CVAST
+
+
+def calc_awareness(strategies, parameters):
+	AWARENESS = parameters[0]
+	NAIVENESS = parameters[1]
+	POPULARITY_CVAST = parameters[2]
+	POPULARITY_CLIGHT = parameters[3]
+	
+	if ((strategies[Clight] == RESPECT) and (strategies[Cvast] == RESPECT)):
+		if AWARENESS > 0.02:
+			AWARENESS -= 0.02
+			print "one"
 	
 	elif ((strategies[Clight] == EXPLOIT) and (strategies[Cvast] == EXPLOIT)):
-		print "two"
+		if AWARENESS < 0.99:
+			AWARENESS += 0.01
+			print "two"
+	return AWARENESS
+"""
 	elif ((strategies[Clight] == RESPECT) and (strategies[Cvast] == EXPLOIT)):
-		Temp = POPULARITY_CVAST*NAIVENESS
-		POPULARITY_CVAST = Temp/N
-		print "three"
+		if POPULARITY_CVAST > POPULARITY_CLIGHT:
+			if AWARENESS < 0.99:
+
+				AWARENESS += 0.01
+				print "three"
+
+		else:
+			if AWARENESS > 0.02:
+				AWARENESS -= 0.02
+				print "four"
+
 	elif ((strategies[Clight] == EXPLOIT) and (strategies[Cvast] == RESPECT)):
-		Temp = (POPULARITY_CVAST*NAIVENESS)+AWARENESS
-		POPULARITY_CVAST = Temp/N
-		print "four"
-	return POPULARITY_CVAST
+		if POPULARITY_CVAST > POPULARITY_CLIGHT:
+			if AWARENESS > 0.02:
+
+				AWARENESS -= 0.02
+				print "five"
+		else:
+			if AWARENESS < 0.99:
+				AWARENESS += 0.01
+				print "six"""
+	
+
+def calc_opt_out(strategies, parameters):
+	AWARENESS = parameters[0]
+	NAIVENESS = parameters[1]
+	POPULARITY_CVAST = parameters[2]
+	POPULARITY_CLIGHT = parameters[3]
+	OPT_OUT = parameters[4]
+	
+	if ((strategies[Clight] == EXPLOIT) and (strategies[Cvast] == EXPLOIT)):
+		if OPT_OUT < 0.999:
+			OPT_OUT += 0.001
+			print "***&&&***"
+	
+	elif ((strategies[Clight] == RESPECT) and (strategies[Cvast] == RESPECT)):
+		if OPT_OUT > 0.001:
+			OPT_OUT -= 0.001
+			print "******"
+
+	
+	return OPT_OUT
 
 def find_NE(result):
 	NEs = [0,0,0,0]
@@ -248,6 +356,9 @@ def play(outfile, parameters):
 	NAIVENESS = parameters[1]
 	POPULARITY_CVAST = parameters[2]
 	POPULARITY_CLIGHT = parameters[3]
+	OPT_OUT = parameters[4]
+	LASTSTRATEGY_CVAST = parameters[5]
+	LASTSTRATEGY_CLIGHT = parameters[6]
 	#GR
 	gameResults = calcResults(parameters)
 	printResults(gameResults)
@@ -260,17 +371,26 @@ def play(outfile, parameters):
 	Clight_strategy, Cvast_strategy = calc_strategies(gameResults, dominantStrategies)
 
 	if Clight_strategy == UNDEFINED:
-		Clight_strategy =  undefined_Strategies(gameResults, Clight)
+		Clight_strategy =  undefined_Strategies(gameResults, Clight, LASTSTRATEGY_CVAST)
+		#Clight_strategy = LASTSTRATEGY_CLIGHT
 		print "Avoiding Low:\t\t\t", Strategy_Options[Clight_strategy]
 	if Cvast_strategy == UNDEFINED:
-		Cvast_strategy = undefined_Strategies(gameResults, Cvast)
+		Cvast_strategy = undefined_Strategies(gameResults, Cvast, LASTSTRATEGY_CLIGHT)
+		#Cvast_strategy = LASTSTRATEGY_CVAST
 		print "Avoiding Low:\t\t\t",Strategy_Options[Cvast_strategy]
 
 	strategies = Clight_strategy, Cvast_strategy 
-		
+
+	LASTSTRATEGY_CVAST, LASTSTRATEGY_CLIGHT = strategies
 	#Rev
 	revenues = calc_revenue(gameResults, strategies, parameters)
+	AWARENESS = calc_awareness(strategies, parameters)
+	OPT_OUT = calc_opt_out(strategies, parameters)
+
+	NAIVENESS = 1.0 - AWARENESS
 	POPULARITY_CVAST = calc_popularity(strategies, parameters)
+	POPULARITY_CLIGHT = 1.0 - POPULARITY_CVAST
+	
 	#NE
 	NE = find_NE(gameResults)
 	
@@ -289,18 +409,20 @@ def play(outfile, parameters):
 
 	outfile.write("--POPS17\t")
 	outfile.write("%02.2f\t %02.2f\t " % ( POPULARITY_CVAST, POPULARITY_CLIGHT))
+	
+	outfile.write("--M&N20\t")
+	outfile.write("%02f\t %.2f\t %.2f\t %.2f\t " % (AWARENESS, NAIVENESS, OPT_OUT, N))
 	outfile.write("--NE?\t")
 	
 	for x in xrange(len(NE)):
 		num = NE[x]
 		outfile.write("%01d\t" % num)
 
-	outfile.write("--M&N\t")
-	outfile.write("%02d\t %.2f\t %.2f\t " % (N, AWARENESS, NAIVENESS))
+	
 	outfile.write("\n")
 
 	
-	return POPULARITY_CVAST
+	return POPULARITY_CVAST, AWARENESS, OPT_OUT, LASTSTRATEGY_CVAST, LASTSTRATEGY_CLIGHT
 
 def analysis():
 	ClightREV_HH = []
@@ -319,7 +441,9 @@ def analysis():
 	CV_rev = []
 	CV_pop = []
 	CL_pop = []
-	f=open("GameResults.txt", "r")
+	aware = []
+	opt_out = []
+	f=open("GameTwoResults.txt", "r")
 	resultsFile = []
 	numbers = []
 	for line in f:
@@ -347,16 +471,17 @@ def analysis():
 		CV_rev.append(int(r[16]))
 		CV_pop.append(r[18])
 		CL_pop.append(r[19])
+		aware.append(r[21])
+		opt_out.append(r[23])
 	
 
 
 	fig2 = plt.figure(num=None, figsize=(12, 8), dpi=80, facecolor='w', edgecolor='k')
-	fig2.suptitle("Player Strategies and Revenue per AWARENESS Population\n Dynamic Popularity")
+	fig2.suptitle("Player Strategies and Revenue per AWARENESS in Population\n Popularity 80/20 split")
 	
 	plt.subplot(411)
 	plt.plot(CL_rev, "r.", label="CLIGHT")
 	plt.plot(CV_rev, "b.", label="CVAST ")
-	#plt.plot(PC_rev, "g--", label = "Prviacy Comp Revenue")
 	plt.ylabel("Potential\n Revenues\n\n")
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
@@ -364,43 +489,50 @@ def analysis():
 	plt.plot(CL_str, "r.", label="CLIGHT")
 	plt.plot(CV_str, "b-", label="CVAST")
 	plt.ylabel("Chosen \nStrategies\n")
-	plt.yticks([0,1,2], Strategy_Options)
-	plt.axis([0,100,-1,3])
+	plt.axis([0,NUMRUNS,-1,3])
+	plt.yticks([0 ,1,2], Strategy_Options)
 
 	plt.subplot(413)
 	plt.plot(CL_DS, "r.", label="CLIGHT")
 	plt.plot(CV_DS,"b--", label="CVAST")
 	plt.ylabel("Dominant \nStrategies\n")
-	plt.xlabel("Aware Population %")
-	plt.yticks([0,1,2], Strategy_Options)
-	plt.axis([0,100,-1,3])
+	plt.axis([0,NUMRUNS,-1,3])
+	plt.yticks([0, 1, 2], Strategy_Options)
+	
 
-	"""plt.subplot(414)
-	plt.plot(CL_pop, "r.", label="CLight")
-	plt.plot(CV_pop,"b--", label="CVast")
-	plt.ylabel("Popularity\n")
-	plt.xlabel("Aware Population %")
-	#plt.yticks([0,1,2], Strategy_Options)
-	plt.axis([0,100,0,1])"""
 
-	plt.savefig("gameTwoResults1.pdf")
+	plt.subplot(414)
+	plt.plot(CL_pop, "b.", label = "CLight Pop")
+	plt.plot(aware, "r.", label="AWARENESS")
+	plt.plot(opt_out, "g.", label = "opt_out")
+	plt.axis([0,NUMRUNS,0,1])
+	plt.ylabel("AWARENESS\n")
+	plt.xlabel("Run (time)")
+
+	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+	plt.savefig("gameTwoResults.pdf")
 	plt.show()
 
 def runs():
-	outfile = open("GameResults.txt", "w")
-	numRuns = 10
-	POPULARITY_CVAST = 0.9
+	outfile = open("GameTwoResults.txt", "w")
+	
+	LASTSTRATEGY_CVAST = NONE
+	LASTSTRATEGY_CLIGHT = NONE 
+	POPULARITY_CVAST = 0.80
 	POPULARITY_CLIGHT = 1.0 - POPULARITY_CVAST
-	up = N / numRuns
-	for r in xrange(numRuns+1):
+	AWARENESS = 0.0
+	NAIVENESS = 1.0 - AWARENESS
+	OPT_OUT = 0.0
+	for r in xrange(NUMRUNS+1):
 		print "\n||||||||||||||||||- START - ||||||||||||||||||||||||||"
-		AWARENESS = r * up
-		NAIVENESS = N - AWARENESS
-		print "Run", r, "of", numRuns
-		parameters = [AWARENESS, NAIVENESS, POPULARITY_CVAST, POPULARITY_CLIGHT]
-		POPULARITY_CVAST = play(outfile, parameters)
+		print "Run", r, "of", NUMRUNS
+		
+		parameters = [AWARENESS, NAIVENESS, POPULARITY_CVAST, POPULARITY_CLIGHT, OPT_OUT, LASTSTRATEGY_CVAST, LASTSTRATEGY_CLIGHT]
+		POPULARITY_CVAST, AWARENESS , OPT_OUT, LASTSTRATEGY_CVAST, LASTSTRATEGY_CLIGHT = play(outfile, parameters)
+		NAIVENESS = 1.0 - AWARENESS
 		POPULARITY_CLIGHT = 1.0 - POPULARITY_CVAST
-		print "pop", POPULARITY_CVAST, POPULARITY_CLIGHT
+
 	
 	outfile.close()
 	analysis()
