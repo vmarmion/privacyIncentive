@@ -7,23 +7,20 @@ import scipy
 import matplotlib.pyplot as plt
 from random import randrange
 
-CUST_BENEFIT = 0
-CUST_TEST_COST = 1
-CUST_VIOLATION_COST = 2
-ORG_PROFIT = 3
-ORG_PRIVACY_COST = 4
-ORG_DATA_PROFIT = 5
 
-NUM_ORGS = 10
-POPULATION = 1000
+NUM_ORGS = 30
+POPULATION = 10000
 
 NUMBER_BOUNDS = NUM_ORGS*POPULATION
 
-NUM_RUNS = 1000
+NUM_RUNS = 50
 
 EXPLOIT = 0
 RESPECT = 1
 
+CHANGECOST = 0
+
+UTILITYFACTOR = 1.2
 
 def AssignRandomInter():
 	#assign randon interation with each organisation [0/1] 
@@ -61,6 +58,8 @@ def calcEngagement(populationArray):
 	#arrary of each customer engagement level
 	return engagement
 
+
+
 def calcOrgHealth(populationArray):
 	orgHealth = []
 	for org in range(NUM_ORGS):
@@ -72,19 +71,35 @@ def calcOrgHealth(populationArray):
 	#return array of each orgs health
 	return orgHealth
 
+def calaOrgTrend():
+	#is a company growing or falling
+	orgTrend = []
+	for org in range(NUM_ORGS):
+		#reset counter
+		trend = 0
+		orgTrend.append(trend)
+	#return array of each orgs health
+	return orgTrend
+	
+
 def calcUtility(populationArray, orgStrategyArray):
 	popUtility = []
+	testCost = 5
 	#for each person count how many private orgs
 	for person in populationArray:
-		utility = 0
+		balance = 0
 		#print "calcUtility", person
 		for org in range(NUM_ORGS):
 			if person[org] == 1: 
 				if orgStrategyArray[org] == RESPECT:
-					utility +=1
+					balance +=1
+					# is the benefit for transaction greater than the negative of not?
 				else:
-					utility -= 1
+					balance -= UTILITYFACTOR
+		utility = balance - testCost
 		popUtility.append(utility)
+		#need to work in the cost of testing!
+		# utility now has to be a factor of over all situation
 	return popUtility
 
 def countArray(array):
@@ -94,61 +109,52 @@ def countArray(array):
 		total += a
 	return total
 
+def killOrg(org,orgHealth, populationArray):
+	print "KILL-------------------"
+	orgHealth[org] = -1
+	for person in range(POPULATION):
+		interaction = populationArray[person]
+		interaction[org] = 0
+		populationArray[person] = interaction
+	return populationArray, orgHealth
 
-def popReduceInteraction(person, popUtility, populationArray, orgStrategy, orgHealth):
-	#popoulation if negative utility will look to swap an organisation of least popularity with a high hih popularity one with privacy
-	
+def popReduceInteraction(person, populationArray, orgStrategy, orgHealth):	
 	minHealth = POPULATION
-	orgPosition = -1
-	personUtility = popUtility[person]
-	interaction = populationArray[person]
-	
-	if personUtility < 0:
-		
-			
-		#look at orgs person interacting with and find lowest health (worst offender)
-		for org in range(NUM_ORGS):
-			if interaction[org] == 1:
-				if orgStrategy[org] == EXPLOIT:
-					
-					if orgHealth[org] <= minHealth:
-						
-						minHealth = orgHealth[org]
-						orgPosition = org
-		
-		# abandon lowest health org
-		if orgPosition > -1:
-			
-			interaction[orgPosition] = 0
-			populationArray[person] = interaction
-			
-	return populationArray
-
-def popIncreaseInteraction(person, popUtility, populationArray, orgStrategy, orgHealth):
-	#popoulation if negative utility will look to swap an organisation of least popularity with a high hih popularity one with privacy
-	
-	maxHealth = 0
-	orgPosition = -1
-	personUtility = popUtility[person]
 	interaction = populationArray[person]
 	choiceArray = []
-	temp = -1
-	
-	if personUtility >= 0:
-		
-		print interaction, person
-		#look at orgs person interacting with and find lowest health (worst offender)
-		for org in range(NUM_ORGS):
-			if interaction[org] == 0:
-				choiceArray.append(org)
-				temp = 0
-		if temp > -1:
-			temp = len(choiceArray)
-			choice = randrange(temp)
-			orgPosition = choiceArray[choice]
-		if orgPosition > -1:
-			interaction[orgPosition] = 1
-			populationArray[person] = interaction
+	choice = 0
+	for org in range(NUM_ORGS):
+		if orgHealth[org] == -1:
+			print "?//////////////////////////DEAD"
+			if interaction[org] == 1:
+				if orgStrategy[org] == EXPLOIT:
+					choiceArray.append(org)
+					choice += 1
+	if choice > 0:
+		orgPosition = choiceArray[randrange(choice)]		
+		interaction[orgPosition] = 0
+		if orgHealth[orgPosition] < POPULATION/20:
+			populationArray, orgHealth = killOrg(org, orgHealth, populationArray)
+		populationArray[person] = interaction
+	return populationArray
+
+def popIncreaseInteraction(person, populationArray, orgStrategy, orgHealth):
+	maxHealth = 0
+	choice = 0
+	choiceArray = []
+	interaction = populationArray[person]
+
+	for org in range(NUM_ORGS):
+		if interaction[org] == 0:
+			if orgHealth >= 0:
+				if orgStrategy[org] == RESPECT:
+					choiceArray.append(org)
+					choice +=1
+	if choice > 0:
+		orgPosition = choiceArray[randrange(choice)]
+		interaction[orgPosition] = 1
+		populationArray[person] = interaction
+
 	return populationArray
 
 
@@ -158,8 +164,12 @@ def plotting():
 	totalEngagementResults = []
 	totalPopUtilityResults = []
 	totalStrategyResults = []
+	o1 = []
+	o2 = []
+	o3 = []
+	o4 = []
 
-	f=open("GameThreeResults.txt", "r")
+	f=open("GameThreeResultsB.txt", "r")
 	resultsFile = []
 	numbers = []
 	for line in f:
@@ -173,6 +183,10 @@ def plotting():
 		totalEngagementResults.append(int(row[2]))
 		totalHealthResults.append(int(row[3]))
 		totalStrategyResults.append(int(row[4]))
+		o1.append(int(row[5]))
+		o2.append(int(row[6]))
+		o3.append(int(row[7]))
+		o4.append(int(row[8]))
 
 	fig2 = plt.figure(num=None, figsize=(12, 8), dpi=80, facecolor='w', edgecolor='k')
 	fig2.suptitle("TITLE")
@@ -181,201 +195,164 @@ def plotting():
 	plt.plot(totalPopUtilityResults, "r.", label="Utility")
 	plt.ylabel("Population Utility")
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+	#plt.axis([0,NUM_RUNS,(-UTILITYFACTOR *NUMBER_BOUNDS),NUMBER_BOUNDS])
 
 	plt.subplot(412)
 	plt.plot(totalEngagementResults, "r.", label="Engagement")
 	plt.ylabel("Engagement")
-	#plt.axis([0,NUMRUNS,-1,3])
-	#plt.yticks([0 ,1,2], Strategy_Options)
+	#plt.axis([0,NUM_RUNS,0,NUMBER_BOUNDS])
+	
 
 	plt.subplot(413)
-	plt.plot(totalHealthResults, "r.", label="Health")
+	plt.plot(o1, "r.", label="o1")
+	plt.plot(o2, "b.", label="o2")
+	plt.plot(o3, "g.", label="o3")
+	plt.plot(o4, "c.", label="o4")
 	plt.ylabel("Health")
+	#plt.axis([0,NUM_RUNS,0,POPULATION])
 	
 	plt.subplot(414)
 	plt.plot(totalStrategyResults, "b.", label = "Strategy")
 	plt.ylabel("Strategy\n")
+	#plt.axis([0,NUM_RUNS,0,NUM_ORGS])
 
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
 	plt.savefig("gameThreeResults.pdf")
 	plt.show()
 
-def orgUpdateStrategy(org, orgStrategy, orgHealth, totalPopUtility):
+def calcRelaxed(popUtility):
+
+	count= 0.0
+	for personUtility in popUtility:
+		if personUtility >= 0:
+			count += 1.0
+	relaxed = count/POPULATION
+	return relaxed
+
+
+
+
+def orgUpdateStrategy(org, orgStrategy, orgHealth, totalPopUtility, totalStrategy, totalEngagement, relaxed):
 	#if population utility is low
 	# number testing could be
-	if orgHealth[org] < (POPULATION/4):
-		if orgStrategy[org] == EXPLOIT:
-			print "E to R"
+	"""if aware of other org strategies and the current utility or awareness of the 
+	population you can make an informed decision as to exploit of respect
+	eg current Health V health if change
+	"""
+	OS = orgStrategy[org]
+	OH = orgHealth[org]
+
+	engagement = totalEngagement/NUMBER_BOUNDS
+
+	concerned = 1-relaxed
+	P = 10 
+	S = 3
+	I = 4
+	#u_RESPECT = math.pow(OH, (0.2 * math.e))  * concerned * POPULATION
+	#u_EXPLOIT = math.pow(OH, (0.24 * math.e)) * relaxed * engagement * POPULATION
+	u_RESPECT = P - S
+	u_EXPLOIT = (P + I) - (concerned * P) - (concerned * I)
+
+	U = u_RESPECT - u_EXPLOIT
+	if U > CHANGECOST:
+		if OS == EXPLOIT:
+			temp = "- +"
 			orgStrategy[org] = RESPECT
-	if orgHealth[org] > (POPULATION - (POPULATION/4)):
-		if orgStrategy[org] == RESPECT:
-			print "R to E"
+		elif OS == RESPECT:
+			temp = "+ +"
+			
+	elif U < -CHANGECOST:
+		if OS == RESPECT:
+			temp = "+ -"
 			orgStrategy[org] = EXPLOIT
+		elif OS == EXPLOIT:
+			temp = "- -"
+	else:
+		temp = "= ="
+			
+	
+
+	""" option one
+		if orgHealth[org] < (POPULATION/8):
+		# assess strategy
+		if orgStrategy[org] == EXPLOIT:
+			print ">>>>>>>>>>>>>>>>>>>>>>>>>>>EXPLOIT to RESPECT :)"
+			orgStrategy[org] = RESPECT
+	if orgHealth[org] > (POPULATION - (POPULATION/8)):
+		if orgStrategy[org] == RESPECT:
+			print "---------------------------RESPECT to EXPLOIT"
+			orgStrategy[org] = EXPLOIT
+	"""
 	return orgStrategy
 
 def run():
-	outfile = open("GameThreeResults.txt", "w")
-	print "\n///////////////START/////////////////\n"
+	outfile = open("GameThreeResultsA.txt", "w")
+	outfileB = open("GameThreeResultsB.txt", "w")
 	
+	#set up
 	orgStrategy = setOrgStrategy()
 	populationArray = setPopulationInteraction()
-
+	
 	engagement = calcEngagement(populationArray)
 	orgHealth = calcOrgHealth(populationArray)
 	popUtility = calcUtility(populationArray, orgStrategy)
-	
-	totalPopUtility = countArray(popUtility)
-	totalEngagement = countArray(engagement)
-	totalHealth = countArray(orgHealth)
-	totalStrategy = countArray(orgStrategy)
-
-	print "Orgs --> \t\t| total"
-	for person in range(POPULATION):
-		print populationArray[person], "person: ",person+1
-
-	print "Engagement:\t", totalEngagement, "/",NUMBER_BOUNDS, "=>", engagement
-	print "Org Health:\t", totalHealth, "/",NUMBER_BOUNDS, "=>", orgHealth
-	print "Org Strategy:\t", totalStrategy, "/", NUM_ORGS, "=>", orgStrategy
-	print "Utility:\t" , totalPopUtility, "/", NUMBER_BOUNDS, "=>", popUtility
-
+	relaxed = calcRelaxed(popUtility)
+			
 
 	for run in range(NUM_RUNS):
-		print run
-		for loop in range(1000):
+		
+		for loop in range(50):#10% swings
+			
 			personA = randrange(POPULATION)
-			personB = randrange(POPULATION)
-			
-		
-			populationArray = popReduceInteraction(personA, popUtility, populationArray, orgStrategy, orgHealth)
-			populationArray = popIncreaseInteraction(personB, popUtility, populationArray, orgStrategy, orgHealth)
-			
-		organisation = randrange(NUM_ORGS)
-		orgStrategy = orgUpdateStrategy(organisation, orgStrategy, orgHealth, totalPopUtility)
-		
-		engagement = calcEngagement(populationArray)
-		orgHealth = calcOrgHealth(populationArray)
-		popUtility = calcUtility(populationArray, orgStrategy)
+			personUtility = popUtility[personA]
 
-		totalPopUtility = countArray(popUtility)
-		totalEngagement = countArray(engagement)
-		totalHealth = countArray(orgHealth)
-		totalStrategy = countArray(orgStrategy)
-		outfile.write("--totals\t")
-		outfile.write("%02d\t %02d\t %02d\t %02d\t " % (totalPopUtility, totalEngagement, totalHealth, totalStrategy))
-		outfile.write("\n")
+			if relaxed <= 0.5:
+				#print "LEAVING --- "
+				populationArray = popReduceInteraction(personA, populationArray, orgStrategy, orgHealth)
+			else:	
+				#print "JOINING ++"
+				populationArray = popIncreaseInteraction(personA, populationArray, orgStrategy, orgHealth)
+			
+			engagement = calcEngagement(populationArray)
+			orgHealth = calcOrgHealth(populationArray)
+			popUtility = calcUtility(populationArray, orgStrategy)
+			relaxed = calcRelaxed(popUtility)
+			
+			totalPopUtility = countArray(popUtility)
+			totalEngagement = countArray(engagement)
+			totalHealth = countArray(orgHealth)
+			totalStrategy = countArray(orgStrategy)
+			
+			outfileB.write("--totals\t")
+			outfileB.write("%02d\t %02d\t %02d\t %02d\t " % (totalPopUtility, totalHealth, totalEngagement, totalStrategy))
+			outfileB.write("%02d\t %02d\t %02d\t %02d\t " % (orgHealth[0], orgHealth[1], orgHealth[2], orgHealth[3] ))
+			outfileB.write("\n") 
+			print loop, "loop", run, "RESPECTING", '%.2f' % totalStrategy,  "RELAXED",  '%.2f' % relaxed, "ENGAGED",  '%.2f' % totalEngagement, "UTILITY",  '%.2f' % totalPopUtility
+	
+
+		organisation = randrange(NUM_ORGS)
+		orgStrategy = orgUpdateStrategy(organisation, orgStrategy, orgHealth, totalPopUtility, totalStrategy, totalEngagement, relaxed)
+		
+		outfileB.write("--totals\t")
+		outfileB.write("%02d\t %02d\t %02d\t %02d\t " % (totalPopUtility, totalHealth, totalEngagement, totalStrategy))
+		outfileB.write("%02d\t %02d\t %02d\t %02d\t " % (orgHealth[0], orgHealth[1], orgHealth[2], orgHealth[3] ))
+		outfileB.write("\n")
 	
 
 	print "\n///////////////END/////////////////\n"
-
-	
-
-	print "Orgs --> \t\t| total"
-	for person in range(POPULATION):
-		print populationArray[person], "person: ",person+1
-
-	print "Engagement:\t", totalEngagement, "/",POPULATION*NUM_ORGS, "=>", engagement
-	print "Org Health:\t", totalHealth, "/",POPULATION*NUM_ORGS, "=>", orgHealth
+	print "individuals\t", engagement[0], engagement[1], engagement[2], engagement[3]
+	print "Engagement:\t", totalEngagement, "/",NUMBER_BOUNDS
+	print "Org Health:\t", totalHealth, "/",NUMBER_BOUNDS, "=>", orgHealth
 	print "Org Strategy:\t", totalStrategy, "/", NUM_ORGS, "=>", orgStrategy
-	print "Utility:\t" , totalPopUtility, "/", POPULATION*NUM_ORGS, "=>", popUtility
+	print "Utility:\t" , totalPopUtility, "/", NUMBER_BOUNDS
 
 
 	outfile.close()
+	outfileB.close()
 	plotting()
 
 run()
-
-def GameParameters(ntc, nro):
-
-	# - (B-V) - T to be positive
-	custBenefit = 10
-	custViolationCost = 20
-	custTestCost = 5
-
-	orgProfit = 10 # P
-	orgPrivacyCost = 5 # S
-	orgDataProfit = 7 #I
-
-	numRespectOrg = nro
-	numDefectOrg = 1 - numRespectOrg
-
-	numTestCust = ntc
-	numDontCust = 1 - numTestCust
-
-	parameters = [custBenefit, custTestCost, custViolationCost, orgProfit, orgPrivacyCost, orgDataProfit, numRespectOrg, numDefectOrg, numTestCust, numDontCust]
-	return parameters
-
-def utilityCust(pars):
-	Ua = (1 - pars[NUM_RESPECT_ORG])
-	Ub = (-1 * (pars[CUST_BENEFIT] - pars[CUST_VIOLATION_COST]))
-	Uc = pars[CUST_TEST_COST]
-	Ud = Ub - Uc
-	U = Ua * Ud
-	print Ua,Ub, Uc, Ud, "U1"
-	return U
-	 
-
-def utilityOrg(pars):
-
-	Ua = -1 * (pars[ORG_PRIVACY_COST] - pars[ORG_DATA_PROFIT])
-	Ub = pars[NUM_TEST_CUST] * pars[ORG_PROFIT]
-	Uc = pars[NUM_TEST_CUST] * pars[ORG_DATA_PROFIT]
-	U = (Ua*Ub )- Uc
-	U = (Ua*Ub )- Uc
-	print Ua,Ub, Uc, "U"
-	return U
-
-
-def perCA(CA):
-	count = 0.0
-	for c in CA:
-		count += c
-	per = count/NUM_populationS
-	return per
-
-def perOA(OA):
-	count = 0.0
-	for o in OA:
-		count += o
-	per = count/NUM_ORGS
-	return per
-
-def begin():
-	CA = setpopulations()
-	OA = setOrgs()
-	Cdecision = 0
-	Odecision = 0
-	for run in range(RUNS):
-		perTestCust = perCA(CA)
-		perRespectOrg = perOA(OA)
-		print perTestCust, perRespectOrg, "pars---------"
-		pars = GameParameters(perTestCust, perRespectOrg)
-		
-		
-		ranCust = randrange(NUM_populationS-1)
-		if utilityCust(pars) > 0:
-			Cdecision = 1
-		else:
-			Cdecision = 0
-		CA[ranCust] = Cdecision
-
-		randOrg = randrange(NUM_ORGS-1)
-		if utilityOrg(pars) >= 0:
-			Odecision = 1
-		else: 
-			Odecision = 0
-		OA[randOrg] = Odecision
-
-		custT.append(perTestCust)
-		orgR.append(perRespectOrg)
-	
-	plt.plot(custT,"g", label="populations Testing")
-	plt.plot(orgR,"r", label="Companies Respecting")
-	plt.ylabel("Percentage")
-	plt.axis([-1,100000,-1,1.5])
-	plt.legend(bbox_to_anchor=(0.5, 1), loc=2, borderaxespad=0.)
-
-	plt.show()
 
 
 
